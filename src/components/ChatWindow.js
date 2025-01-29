@@ -76,11 +76,11 @@ export default function ChatWindow() {
   const handleSendMessage = async (message) => {
     if (!message.trim()) return;
 
-    if (message.toLowerCase() === "help") {
+    if (message.toLowerCase() === "help"||message.toLowerCase() === "menu") {
       setShowQuickActions(true);
       setMessages([
         ...messages,
-        { role: "user", content: "help" },
+        { role: "user", content: message },
         { role: "assistant", content: "Here are the available categories you can explore:" }
       ]);
       return;
