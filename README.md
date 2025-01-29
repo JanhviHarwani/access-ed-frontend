@@ -1,5 +1,4 @@
 start frontend:
-cd frontend
 npm start
 # Getting Started with Create React App
 
