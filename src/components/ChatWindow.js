@@ -104,7 +104,7 @@ export default function ChatWindow() {
   const [showQuickActions, setShowQuickActions] = useState(true);
   const [authError, setAuthError] = useState(false);
   const messagesEndRef = useRef(null);
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

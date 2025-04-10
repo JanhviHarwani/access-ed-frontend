@@ -91,7 +91,7 @@ export default function Login({ onLogin }) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="pl-10 w-full p-3 rounded-lg border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-700/50 focus:border-amber-700"
-                    placeholder="accessibility_educator"
+                    placeholder="username"
                   />
                 </div>
               </div>
