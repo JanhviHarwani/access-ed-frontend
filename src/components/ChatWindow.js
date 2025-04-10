@@ -2,6 +2,45 @@ import React, { useState, useRef, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
 import { Book, Calendar, Loader, Users } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+
+// Custom link renderer component
+const CustomLink = ({ href, children }) => {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline hover:text-blue-800"
+    >
+      {children}
+    </a>
+  );
+};
+
+// Function to enhance response with source links if not already included in markdown
+const enhanceResponseWithSources = (response, sourceUrls, sourceTitles) => {
+  if (!sourceUrls || sourceUrls.length === 0) return response;
+  
+  // Check if response already contains "For more information"
+  if (response.includes("For more information") || response.includes("visit:")) {
+    return response;
+  }
+  
+  // Add sources section
+  let enhancedResponse = response;
+  enhancedResponse += "\n\nFor more information, visit:";
+  
+  sourceUrls.forEach((url, index) => {
+    const title = sourceTitles && sourceTitles[index] 
+      ? sourceTitles[index] 
+      : url.split('/').pop() || "Resource";
+    
+    enhancedResponse += `\n- [${title}](${url})`;
+  });
+  
+  return enhancedResponse;
+};
 
 const QuickActionButton = ({ icon: Icon, title, description, onClick }) => (
   <button
@@ -63,7 +102,9 @@ export default function ChatWindow() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const messagesEndRef = useRef(null);
+  const { user, logout } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,10 +133,19 @@ export default function ChatWindow() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}`, {
+      // Get token from localStorage
+      const userData = JSON.parse(localStorage.getItem("user"));
+      const token = userData?.token;
+
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           message,
@@ -103,25 +153,63 @@ export default function ChatWindow() {
         }),
       });
 
+      if (response.status === 401) {
+        // Authentication error
+        setAuthError(true);
+        throw new Error("Authentication failed");
+      }
+
       if (!response.ok) {
         throw new Error("Failed to get response");
       }
 
       const data = await response.json();
-      setMessages([...newMessages, { role: "assistant", content: data.response }]);
+      
+      // Enhance response with source URLs if provided
+      const enhancedContent = enhanceResponseWithSources(
+        data.response, 
+        data.source_urls, 
+        data.source_titles
+      );
+      
+      setMessages([...newMessages, { role: "assistant", content: enhancedContent }]);
     } catch (error) {
       console.error("Error:", error);
-      setMessages([
-        ...newMessages,
-        {
-          role: "assistant",
-          content: "I apologize, but I encountered an error. Please try again.",
-        },
-      ]);
+      
+      if (error.message === "Authentication failed") {
+        // Handle authentication error - will trigger logout through effect
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: "Your session has expired. Please log in again.",
+          },
+        ]);
+      } else {
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: "I apologize, but I encountered an error. Please try again.",
+          },
+        ]);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // Effect to handle authentication errors
+  useEffect(() => {
+    if (authError) {
+      // Log the user out after a short delay so they can see the message
+      const timer = setTimeout(() => {
+        logout();
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authError, logout]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-11rem)]">
@@ -140,7 +228,13 @@ export default function ChatWindow() {
                   : "bg-white text-black border border-gray-200"
               } transition-all duration-300 hover:scale-[1.01]`}
             >
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  a: CustomLink
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
             </div>
           </div>
         ))}
@@ -159,7 +253,7 @@ export default function ChatWindow() {
         <div ref={messagesEndRef} />
       </div>
       <div className="p-6 bg-white border-t border-gray-200">
-        <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
+        <ChatInput onSendMessage={handleSendMessage} disabled={loading || authError} />
       </div>
     </div>
   );

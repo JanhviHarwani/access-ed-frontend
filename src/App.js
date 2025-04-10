@@ -1,6 +1,10 @@
 import React from 'react';
 import ChatWindow from './components/ChatWindow';
-import { MessageCircle } from 'lucide-react';
+import Login from './components/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoadingSpinner from './components/LoadingSpinner';
+import { MessageCircle, LogOut } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const WaveBackground = () => (
   <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -22,25 +26,53 @@ const WaveBackground = () => (
   </div>
 );
 
-export default function App() {
+function AppContent() {
+  const { user, login, logout, loading } = useAuth();
+  
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="min-h-screen bg-[#f6f5f1] text-gray-800">
       <div className="container mx-auto px-4 py-8 h-screen">
-        <div className="bg-white backdrop-blur-xl rounded-xl shadow-lg overflow-hidden h-[95vh] border border-gray-200 relative">
-          <WaveBackground />
-          <div className="bg-white p-6 border-b border-gray-200 relative">
-            <div className="flex items-center space-x-3">
-              <MessageCircle className="w-8 h-8 text-amber-700" />
-              <div>
-                <h1 className="text-2xl font-bold mb-1 text-gray-800 animate-fade-in">
-                  Access-Ed-Assistant
-                </h1>
+        <ProtectedRoute 
+          isAuthenticated={!!user}
+          fallback={<Login onLogin={(username) => login(username)} />}
+        >
+          <div className="bg-white backdrop-blur-xl rounded-xl shadow-lg overflow-hidden h-[95vh] border border-gray-200 relative">
+            <WaveBackground />
+            <div className="bg-white p-6 border-b border-gray-200 relative">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <MessageCircle className="w-8 h-8 text-amber-700" />
+                  <div>
+                    <h1 className="text-2xl font-bold mb-1 text-gray-800 animate-fade-in">
+                      Access-Ed-Assistant
+                    </h1>
+                  </div>
+                </div>
+                <button 
+                  onClick={logout}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <LogOut className="w-5 h-5 text-amber-700" />
+                  <span className="text-sm font-medium">Sign Out</span>
+                </button>
               </div>
             </div>
+            <ChatWindow />
           </div>
-          <ChatWindow />
-        </div>
+        </ProtectedRoute>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
