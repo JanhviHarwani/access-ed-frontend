@@ -3,6 +3,7 @@ import ChatInput from "./ChatInput";
 import ReactMarkdown from "react-markdown";
 import { Book, Calendar, Loader, Users } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { enhanceResponseWithSources } from "../utils/enhanceResponseWithSources";
 
 // Custom link renderer component
 const CustomLink = ({ href, children }) => {
@@ -16,30 +17,6 @@ const CustomLink = ({ href, children }) => {
       {children}
     </a>
   );
-};
-
-// Function to enhance response with source links if not already included in markdown
-const enhanceResponseWithSources = (response, sourceUrls, sourceTitles) => {
-  if (!sourceUrls || sourceUrls.length === 0) return response;
-  
-  // Check if response already contains "For more information"
-  if (response.includes("For more information") || response.includes("visit:")) {
-    return response;
-  }
-  
-  // Add sources section
-  let enhancedResponse = response;
-  enhancedResponse += "\n\nFor more information, visit:";
-  
-  sourceUrls.forEach((url, index) => {
-    const title = sourceTitles && sourceTitles[index] 
-      ? sourceTitles[index] 
-      : url.split('/').pop() || "Resource";
-    
-    enhancedResponse += `\n- [${title}](${url})`;
-  });
-  
-  return enhancedResponse;
 };
 
 const QuickActionButton = ({ icon: Icon, title, description, onClick }) => (
@@ -86,15 +63,15 @@ const quickActions = [
   },
   {
     icon: Calendar,
-    title: "Teaching Strategies",
-    description: "Discover effective teaching methods",
-    message: "How can I as a teacher help students who are visually impaired learn better?",
+    title: "Computer Science Accessibility",
+    description: "Learn more about Accessibility in Computer Science Field",
+    message: "How do I choose accessible tools or software for a computer science class?",
   },
   {
     icon: Users,
-    title: "Classroom Adaptation",
-    description: "Tips for creating inclusive classrooms",
-    message: "How can I adapt my classroom for visually impaired students?",
+    title: "Course Materials Adaptation ",
+    description: "Tips for Modifying class documents like syllabi, presentations, regarding computing",
+    message: "How do I go about making my slides accessible in an introduction to programming class in Python?",
   },
 ];
 
@@ -117,7 +94,7 @@ export default function ChatWindow() {
   const handleSendMessage = async (message) => {
     if (!message.trim()) return;
 
-    if (message.toLowerCase() === "help"||message.toLowerCase() === "menu") {
+    if (message.toLowerCase() === "help" || message.toLowerCase() === "menu") {
       setShowQuickActions(true);
       setMessages([
         ...messages,
@@ -154,7 +131,6 @@ export default function ChatWindow() {
       });
 
       if (response.status === 401) {
-        // Authentication error
         setAuthError(true);
         throw new Error("Authentication failed");
       }
@@ -165,11 +141,12 @@ export default function ChatWindow() {
 
       const data = await response.json();
       
-      // Enhance response with source URLs if provided
+      // Enhance response with source URLs if provided and not a general chat message
       const enhancedContent = enhanceResponseWithSources(
         data.response, 
         data.source_urls, 
-        data.source_titles
+        data.source_titles,
+        data.is_general_chat // Use the flag from backend
       );
       
       setMessages([...newMessages, { role: "assistant", content: enhancedContent }]);
@@ -177,7 +154,6 @@ export default function ChatWindow() {
       console.error("Error:", error);
       
       if (error.message === "Authentication failed") {
-        // Handle authentication error - will trigger logout through effect
         setMessages([
           ...newMessages,
           {
@@ -202,7 +178,6 @@ export default function ChatWindow() {
   // Effect to handle authentication errors
   useEffect(() => {
     if (authError) {
-      // Log the user out after a short delay so they can see the message
       const timer = setTimeout(() => {
         logout();
       }, 3000);
