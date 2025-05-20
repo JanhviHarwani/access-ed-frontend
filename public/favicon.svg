@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="256" cy="256" r="240" fill="#0064a4"></circle>
+  <circle cx="256" cy="256" r="220" fill="#ffffff"></circle>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#ffd200" stroke-width="20"></circle>
+  <rect x="146" y="180" width="220" height="180" rx="10" fill="#0064a4"></rect>
+  <rect x="156" y="190" width="200" height="160" rx="5" fill="#ffffff"></rect>
+  <path d="M176 230 L336 230 M176 260 L336 260 M176 290 L336 290 M176 320 L260 320" stroke="#0064a4" stroke-width="8" stroke-linecap="round"></path>
+  <path d="M256 120 L190 150 L256 180 L322 150 Z" fill="#0064a4"></path>
+  <path d="M256 180 L256 200 M190 150 L190 180 Q223 200 256 200 Q289 200 322 180 L322 150" stroke="#0064a4" stroke-width="8" fill="none"></path>
+  <circle cx="256" cy="120" r="10" fill="#ffd200"></circle>
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#0064a4">ACCESS·UCI·ED</text>
+</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>
